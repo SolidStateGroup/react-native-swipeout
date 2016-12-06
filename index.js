@@ -107,6 +107,7 @@ const Swipeout = React.createClass({
     scroll: PropTypes.func,
     style: View.propTypes.style,
     sensitivity: PropTypes.number,
+	pressThreshold: PropTypes.number,
   },
 
   getDefaultProps: function() {
@@ -114,6 +115,7 @@ const Swipeout = React.createClass({
       rowID: -1,
       sectionID: -1,
       sensitivity: 0,
+	  pressThreshold: 2,
     };
   },
 
@@ -141,8 +143,8 @@ const Swipeout = React.createClass({
         Math.abs(gestureState.dy) > this.props.sensitivity,
       onPanResponderGrant: this._handlePanResponderGrant,
       onPanResponderMove: this._handlePanResponderMove,
-      onPanResponderRelease: this._handlePanResponderEnd,
-      onPanResponderTerminate: this._handlePanResponderEnd,
+      onPanResponderRelease: (evt, state) => this._handlePanResponderEnd(evt, state),
+      onPanResponderTerminate: (evt, state) => this._handlePanResponderEnd(evt, state, true),
       onShouldBlockNativeResponder: (event, gestureState) => true,
     });
   },
@@ -187,7 +189,7 @@ const Swipeout = React.createClass({
     }
   },
 
-  _handlePanResponderEnd: function(e: Object, gestureState: Object) {
+  _handlePanResponderEnd: function(e: Object, gestureState: Object, terminated) {
     var posX = gestureState.dx;
     var contentPos = this.state.contentPos;
     var contentWidth = this.state.contentWidth;
@@ -224,7 +226,7 @@ const Swipeout = React.createClass({
       }
       else {
         // close swipeout
-        if (!contentPos && this.props.onPress) {
+        if (this.props.onPress && !terminated && (this.state.openedRight ? contentPos <= this.props.pressThreshold : contentPos >= this.props.pressThreshold * -1)) {
           this.props.onPress();
         }
         this._tweenContent('contentPos', 0);
